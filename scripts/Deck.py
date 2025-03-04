@@ -12,6 +12,9 @@ class Deck():
     def add_top(self, card: Card):
         self.deck.insert(0, card)
 
+    def remove_card(self, idx: int):
+        return self.deck.pop(idx)
+
     def remove_top(self) -> Card:
         # check for empty
         if len(self.deck) > 0:
@@ -25,7 +28,11 @@ class Deck():
             return self.deck.pop(-1)
         else:
             return None
-    
-    def print(self):
-        for card in self.deck:
-            print(card.print())
+
+    def print(self, onlyCities=False):
+        for idx,card in enumerate(self.deck):
+            if onlyCities:
+                if card.city is not None:
+                    print(idx, card.print())
+            else:
+                print(idx, card.print())

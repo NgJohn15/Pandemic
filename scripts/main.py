@@ -1,9 +1,10 @@
 import logging
 import random
+import pygame
 from Deck import Deck
 from Card import Card
 from Map import Map
-from Role import Role, get_players
+from Role import Role, RoleType, get_players
 
 # game data
 infection_cards = Deck()
@@ -17,6 +18,26 @@ infection_counter = 0
 infection_rate = [2, 2, 2, 3, 3, 4, 4]
 board = Map()
 game_over = 0
+
+
+import networkx as nx
+import matplotlib.pyplot as plt
+
+def visualize_graph(adjacency_list):
+    # Create a directed graph from the adjacency list
+    G = nx.DiGraph()
+
+    # Add edges to the graph
+    for node, neighbors in adjacency_list.items():
+        for neighbor in neighbors:
+            G.add_edge(node, neighbor)
+
+    # Draw the graph
+    plt.figure(figsize=(8, 6))
+    pos = nx.spring_layout(G)  # positions for all nodes
+    nx.draw(G, pos, with_labels=True, node_size=2000, node_color='lightblue', font_size=10, font_color='black', font_weight='bold', arrows=True)
+    plt.title("Graph Visualization")
+    plt.show()
 
 # game setup
 def setup(list_of_players: list[Role], epidemic_no: int):
@@ -79,6 +100,7 @@ def setup(list_of_players: list[Role], epidemic_no: int):
         for _ in range(3):
             card = infection_cards.remove_top()
             print(card.city, "infected by", infect)
+            print(card.city, card.color, infect, False, card.city)
             board.infect_city(card.city, card.color, infect, False, card.city)
             infection_discard.add_top(card)
 
@@ -89,9 +111,40 @@ def turn():
     pass
 logging.getLogger().setLevel(logging.DEBUG)
 DIFFICULTY = 6
-player_list = get_players(4)
+player_count = 4
+player_list = get_players(player_count)
 setup(player_list, DIFFICULTY)
 turn = 0
-while(game_over):
-    pass
+# visualize_graph(board.map)
+while(True):
+    player: RoleType = player_list[turn]
+    print(f"{player.name()} turn.")
+    print("Your hand:")
+    player.hand.print()
 
+    if player.actions == 0:
+        # next player's turn
+        turn = (turn + 1) % player_count
+        continue
+
+    print(f"You have {player.actions} actions left")
+    print("Drive/Ferry, Direct Flight, Charter Flight, Shuttle Flight, Build research, Treat Disease, Share Knowledge, Discover Cure")
+    action = int(input("What action would you like to take?"))
+
+    assert 0 <= action < 8, "Illegal input [0-7]"
+    if action == 0:
+        # ask player where they want to drive/ferry
+        neighbors = board.map.get(player.curr_city)
+        print(neighbors)
+        new_city = int(input(f"You are in {player.curr_city}. Where would you like to go?"))
+        assert new_city in range(len(neighbors)), "Illegal entry"
+        player.move_to(neighbors[new_city])
+    elif action == 1:
+        # direct flight
+        player.hand.print(True)
+        idx = int(input("Which city would you like to fly to?"))
+        card = player.hand.remove_card(idx)
+        player_discard.add_top(card)
+        player.move_to(card.city)
+    else:
+        pass

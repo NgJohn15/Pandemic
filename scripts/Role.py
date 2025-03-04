@@ -1,5 +1,8 @@
 import random
+from typing import Union
 from Deck import Deck
+
+
 
 def get_players(players: int) -> list:
     if players > 4 or players < 1:
@@ -10,6 +13,58 @@ def get_players(players: int) -> list:
 class Role():
     def __init__(self):
         self.hand = Deck()
+        self.actions = 4
+        self.curr_city = "Atlanta"
+
+    def name(self):
+        pass
+
+    def move_to(self, new_city):
+        """
+        Move to an adjacent city
+        """
+        if self.actions > 0:
+            print(f"{self.name()} moved from {self.curr_city} to {new_city}")
+            self.curr_city = new_city
+            self.actions -= 1
+        else:
+            print("No actions left")
+        pass
+    def direct_flight(self):
+        """
+        Discard a city card and move to that city
+        """
+        pass
+    def charter_flight(self):
+        """
+        Discard a city card that you currently in, fly to another city
+        """
+        pass
+    def shuttle_flight(self):
+        """
+        Move between cities with a research city
+        """
+        pass
+    def build_research(self):
+        """
+        Build a research city in the current city and remove that city card from hand.
+        """
+        pass
+    def treat_disease(self):
+        """
+        Remove 1 color cube from the current city
+        """
+        pass
+    def share_knowledge(self):
+        """
+        Trade card(s) with another player if both players are within the same city as the card being traded.
+        """
+        pass
+    def discover_cure(self):
+        """
+        Take 5 cards from hand, if they are the same type. Set disease to cured.
+        """
+        pass
 """
 Dispatcher: Moves pawns and performs actions by clicking on icons
 Medic: Helps treat patients
@@ -26,6 +81,8 @@ class Dispatcher(Role):
     """
     def __init__(self):
         super().__init__()
+    def name(self):
+        return "Dispatcher"
 
 class Medic(Role):
     """
@@ -33,6 +90,9 @@ class Medic(Role):
     """
     def __init__(self):
         super().__init__()
+    
+    def name(self):
+        return "Medic"
 
 class Scientist(Role):
     """
@@ -40,6 +100,16 @@ class Scientist(Role):
     """
     def __init__(self):
         super().__init__()
+    
+    def name(self):
+        return "Scientist"
+
+    def discover_cure(self):
+        """
+        Remove 4 cards of the same disease color, change that disease to cured
+        """
+        pass
+        
 
 class Researcher(Role):
     """
@@ -47,6 +117,9 @@ class Researcher(Role):
     """
     def __init__(self):
         super().__init__()
+    
+    def name(self):
+        return "Researcher"
 
 class Operations(Role):
     """
@@ -54,6 +127,9 @@ class Operations(Role):
     """
     def __init__(self):
         super().__init__()
+    
+    def name(self):
+        return "Operations"
 
 class ContingencyPlanner(Role):
     """
@@ -61,6 +137,9 @@ class ContingencyPlanner(Role):
     """
     def __init__(self):
         super().__init__()
+    
+    def name(self):
+        return "Contingency Planner"
 
 class QuarantineSpecialist(Role):
     """
@@ -68,3 +147,8 @@ class QuarantineSpecialist(Role):
     """
     def __init__(self):
         super().__init__()
+
+    def name(self):
+        return "Quarantine Specialist"
+
+RoleType = Union[Dispatcher, Medic, Researcher, Operations, ContingencyPlanner, QuarantineSpecialist]

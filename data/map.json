@@ -1,6 +1,6 @@
 {
     "Algiers": ["Madrid","Paris","Istanbul","Cairo"],
-    "Cairo": ["Algiers","khartoum","Istanbul","Baghdad","Riyadh"],
+    "Cairo": ["Algiers","Khartoum","Istanbul","Baghdad","Riyadh"],
     "Istanbul": ["Milan","St. Petersburg","Moscow","Baghdad","Cairo","Aligers"],
     "Moscow": ["St. Petersburg","Istanbul","Tehran"],
     "Baghdad": ["Istanbul","Cairo","Riyadh","Karachi","Tehran"],

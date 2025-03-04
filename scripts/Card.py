@@ -7,5 +7,5 @@ class Card():
         self.city = city
         self.color = color
     
-    def print(self):
-        print(f"[{self.card_type} {self.color} {self.card_contents} {self.city}]")
+    def print(self) -> str:
+        return f"[{self.card_type} {self.color} {self.card_contents} {self.city}]"
