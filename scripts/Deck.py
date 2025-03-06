@@ -12,6 +12,10 @@ class Deck():
     def add_top(self, card: Card):
         self.deck.insert(0, card)
 
+    def add_stack(self, cards: list[Card]) -> None:
+        for card in cards:
+            self.add_top(card)
+
     def remove_card(self, idx: int):
         return self.deck.pop(idx)
 
@@ -28,6 +32,9 @@ class Deck():
             return self.deck.pop(-1)
         else:
             return None
+
+    def empty(self) -> None:
+        self.deck.clear()
 
     def print(self, onlyCities=False):
         for idx,card in enumerate(self.deck):

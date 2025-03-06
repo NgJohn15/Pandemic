@@ -11,4 +11,7 @@ class Card():
         self.color = color
     
     def print(self) -> str:
-        return f"[{self.city.name} {self.color.name} {self.card_contents}]"
+        if self.city != None and self.color != None:
+            return f"[{self.city.name} {self.color.name} {self.card_contents}]"
+        else:
+            return f"[{self.card_type} {self.card_contents}]"

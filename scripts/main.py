@@ -15,10 +15,11 @@ research_stations: dict[str, 0] = {}
 disease_state = {"blue": 0, "red": 0, "yellow": 0, "black": 0}
 outbreak_counter = 0
 infection_counter = 0
-infection_rate = [2, 2, 2, 3, 3, 4, 4]
+INFECTION_RATE = [2, 2, 2, 3, 3, 4, 4]
 board = Map()
 game_over = 0
-
+DIFFICULTY = 6
+PLAYER_COUNT = 4
 
 # game setup
 def setup(list_of_players: list[Role], epidemic_no: int):
@@ -78,15 +79,22 @@ def setup(list_of_players: list[Role], epidemic_no: int):
             board.infect_city(card.city, card.color, infect, False, card.city)
             infection_discard.add_top(card)
 
-def run():
-    pass
+def epidemic() -> None:
+    # Increase epidemic level.
+    infection_counter += 1
+    # Pull infection card from bottom, and infect by 3.
+    card = infection_cards.remove_bottom()
+    board.infect_city(card.city, card.color, 3, False, card.city)
+    # Shuffle disard pile and add to top of infection deck.
+    infection_cards.add_stack(infection_discard.shuffle())
+    infection_discard.empty()    
 
 def turn():
     pass
 logging.getLogger().setLevel(logging.DEBUG)
-DIFFICULTY = 6
-player_count = 4
-player_list = get_players(player_count)
+
+player_list = get_players(PLAYER_COUNT)
+
 setup(player_list, DIFFICULTY)
 turn = 0
 
@@ -98,7 +106,23 @@ while(True):
 
     if player.actions == 0:
         # next player's turn
-        turn = (turn + 1) % player_count
+        turn = (turn + 1) % PLAYER_COUNT
+
+        print("Player Card Draw 2")
+        # Draw 2 Player Cards
+        for _ in range(2):
+            card1 = player_cards.remove_top()
+            if card1.card_type == "EPIDEMIC":
+                print("EPIDEMIC PULLED")
+                epidemic()
+            else:
+                player.hand.add_top(card1)
+        # Draw {infection_rate} number of infections cards
+        for _ in range(INFECTION_RATE[infection_counter]):
+            card: Card = infection_cards.remove_top()
+            board.infect_city(card.city, card.color, 1, False, card.city)
+            infection_discard.add_top(card)
+        # End of player's turn
         continue
 
     print(f"You have {player.actions} actions left")
@@ -108,9 +132,9 @@ while(True):
     assert 0 <= action < 8, "Illegal input [0-7]"
     if action == 0:
         # ask player where they want to drive/ferry
-        neighbors = board.map.get(player.curr_city)
-        print(neighbors)
-        new_city = int(input(f"You are in {player.curr_city}. Where would you like to go?"))
+        neighbors = board.map.get(player.curr_city).neighbors
+        print([x.name for x in neighbors])
+        new_city = int(input(f"You are in {player.curr_city.name}. Where would you like to go?"))
         assert new_city in range(len(neighbors)), "Illegal entry"
         player.move_to(neighbors[new_city])
     elif action == 1:
@@ -121,4 +145,4 @@ while(True):
         player_discard.add_top(card)
         player.move_to(card.city)
     else:
-        pass
+        player.actions -= 1

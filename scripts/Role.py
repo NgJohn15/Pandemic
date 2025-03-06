@@ -1,6 +1,7 @@
 import random
 from typing import Union
 from Deck import Deck
+from City import CityNames
 
 
 
@@ -14,7 +15,7 @@ class Role():
     def __init__(self):
         self.hand = Deck()
         self.actions = 4
-        self.curr_city = "Atlanta"
+        self.curr_city = CityNames.ATLANTA
 
     def name(self):
         pass
@@ -24,7 +25,7 @@ class Role():
         Move to an adjacent city
         """
         if self.actions > 0:
-            print(f"{self.name()} moved from {self.curr_city} to {new_city}")
+            print(f"{self.name()} moved from {self.curr_city.name} to {new_city.name}")
             self.curr_city = new_city
             self.actions -= 1
         else:
