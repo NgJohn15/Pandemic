@@ -1,10 +1,10 @@
 import logging
 import random
-import pygame
 from Deck import Deck
 from Card import Card
 from Map import Map
 from Role import Role, RoleType, get_players
+from City import CityNames, DiseaseColor
 
 # game data
 infection_cards = Deck()
@@ -20,38 +20,14 @@ board = Map()
 game_over = 0
 
 
-import networkx as nx
-import matplotlib.pyplot as plt
-
-def visualize_graph(adjacency_list):
-    # Create a directed graph from the adjacency list
-    G = nx.DiGraph()
-
-    # Add edges to the graph
-    for node, neighbors in adjacency_list.items():
-        for neighbor in neighbors:
-            G.add_edge(node, neighbor)
-
-    # Draw the graph
-    plt.figure(figsize=(8, 6))
-    pos = nx.spring_layout(G)  # positions for all nodes
-    nx.draw(G, pos, with_labels=True, node_size=2000, node_color='lightblue', font_size=10, font_color='black', font_weight='bold', arrows=True)
-    plt.title("Graph Visualization")
-    plt.show()
-
 # game setup
 def setup(list_of_players: list[Role], epidemic_no: int):
     # https://upload.wikimedia.org/wikipedia/commons/6/6f/Pandemic_game_graph.svg
-    black_cities = ["Algiers", "Cairo", "Istanbul", "Moscow", "Baghdad", "Riyadh", "karachi", "Tehran", "Karachi", "Delhi", "Mumbai", "Kolkata", "Chennai"]
-    blue_cities = ["San Francisco", "Chicago", "Atlanta", "Montreal", "New York", "Washington", "London", "Madrid", "Paris", "Essen", "St. Petersburg", "Milan"]
-    red_cities = ["Seoul", "Tokyo", "Shanghai", "Taipei", "Osaka", "Hong Kong", "Manila", "Ho Chi Minh City", "Bangkok", "Jakarta", "Sydney"]
-    yellow_cities = ["Los Angeles", "Mexico City", "Miami", "Sao Paulo", "Lagos", "Khartoum", "Santiago", "Lima", "Bogota", "Buenos Aires", "Kinshasa", "Johanesburg"]
 
     # Generate infection and player cards
-    for lst, color in [(black_cities, "Black"), (blue_cities, "Blue"), (red_cities, "Red"), (yellow_cities, "Yellow")]:
-        for city in lst:
-            infection_cards.add_top(Card("Infection", color, city, color))
-            player_cards.add_top(Card("Player", color, city, color))
+    for city in board.map.values():
+        infection_cards.add_top(Card("Infection", "", city.city, city.color))
+        player_cards.add_top(Card("Player", "", city.city, city.color))
     
     # Generate event cards
     player_cards.add_top(Card("Event",  "RESILIENT POPULATION: Remove any 1 card in the infection discard pile form the game. You may play this between the infect and intensify steps of an epidemic."))
@@ -81,7 +57,7 @@ def setup(list_of_players: list[Role], epidemic_no: int):
     start = 0
     end = div
     count = 0
-    for i in range(epidemic_no):
+    for _ in range(epidemic_no):
         if count == epidemic_no - 1:
             end = len(player_cards.deck)
 
@@ -98,9 +74,7 @@ def setup(list_of_players: list[Role], epidemic_no: int):
     # infect initial cities
     for infect in range(3, 0, -1):
         for _ in range(3):
-            card = infection_cards.remove_top()
-            print(card.city, "infected by", infect)
-            print(card.city, card.color, infect, False, card.city)
+            card: Card = infection_cards.remove_top()
             board.infect_city(card.city, card.color, infect, False, card.city)
             infection_discard.add_top(card)
 
@@ -115,7 +89,7 @@ player_count = 4
 player_list = get_players(player_count)
 setup(player_list, DIFFICULTY)
 turn = 0
-# visualize_graph(board.map)
+
 while(True):
     player: RoleType = player_list[turn]
     print(f"{player.name()} turn.")
