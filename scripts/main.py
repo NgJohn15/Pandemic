@@ -1,12 +1,10 @@
 import logging
 import random
-
-# import pygame
-from scripts.Deck import Deck
 from Deck import Deck
 from Card import Card
 from Map import Map
 from Role import Role, RoleType, get_players
+from City import CityNames, DiseaseColor
 
 # game data
 infection_cards = Deck()
@@ -17,43 +15,20 @@ research_stations: list[str] = []
 disease_state = {"blue": 0, "red": 0, "yellow": 0, "black": 0}
 outbreak_counter = 0
 infection_counter = 0
-infection_rate = [2, 2, 2, 3, 3, 4, 4]
+INFECTION_RATE = [2, 2, 2, 3, 3, 4, 4]
 board = Map()
 game_over = 0
-
-
-# import networkx as nx
-# import matplotlib.pyplot as plt
-
-def visualize_graph(adjacency_list):
-    # Create a directed graph from the adjacency list
-    G = nx.DiGraph()
-
-    # Add edges to the graph
-    for node, neighbors in adjacency_list.items():
-        for neighbor in neighbors:
-            G.add_edge(node, neighbor)
-
-    # Draw the graph
-    plt.figure(figsize=(8, 6))
-    pos = nx.spring_layout(G)  # positions for all nodes
-    nx.draw(G, pos, with_labels=True, node_size=2000, node_color='lightblue', font_size=10, font_color='black', font_weight='bold', arrows=True)
-    plt.title("Graph Visualization")
-    plt.show()
+DIFFICULTY = 6
+PLAYER_COUNT = 4
 
 # game setup
 def setup(list_of_players: list[Role], epidemic_no: int):
     # https://upload.wikimedia.org/wikipedia/commons/6/6f/Pandemic_game_graph.svg
-    black_cities = ["Algiers", "Cairo", "Istanbul", "Moscow", "Baghdad", "Riyadh", "karachi", "Tehran", "Karachi", "Delhi", "Mumbai", "Kolkata", "Chennai"]
-    blue_cities = ["San Francisco", "Chicago", "Atlanta", "Montreal", "New York", "Washington", "London", "Madrid", "Paris", "Essen", "St. Petersburg", "Milan"]
-    red_cities = ["Seoul", "Tokyo", "Shanghai", "Taipei", "Osaka", "Hong Kong", "Manila", "Ho Chi Minh City", "Bangkok", "Jakarta", "Sydney"]
-    yellow_cities = ["Los Angeles", "Mexico City", "Miami", "Sao Paulo", "Lagos", "Khartoum", "Santiago", "Lima", "Bogota", "Buenos Aires", "Kinshasa", "Johanesburg"]
 
     # Generate infection and player cards
-    for lst, color in [(black_cities, "Black"), (blue_cities, "Blue"), (red_cities, "Red"), (yellow_cities, "Yellow")]:
-        for city in lst:
-            infection_cards.add_top(Card("Infection", color, city, color))
-            player_cards.add_top(Card("Player", color, city, color))
+    for city in board.map.values():
+        infection_cards.add_top(Card("Infection", "", city.city, city.color))
+        player_cards.add_top(Card("Player", "", city.city, city.color))
     
     # Generate event cards
     player_cards.add_top(Card("Event",  "RESILIENT POPULATION: Remove any 1 card in the infection discard pile form the game. You may play this between the infect and intensify steps of an epidemic."))
@@ -83,7 +58,7 @@ def setup(list_of_players: list[Role], epidemic_no: int):
     start = 0
     end = div
     count = 0
-    for i in range(epidemic_no):
+    for _ in range(epidemic_no):
         if count == epidemic_no - 1:
             end = len(player_cards.deck)
 
@@ -100,24 +75,29 @@ def setup(list_of_players: list[Role], epidemic_no: int):
     # infect initial cities
     for infect in range(3, 0, -1):
         for _ in range(3):
-            card = infection_cards.remove_top()
-            print(card.city, "infected by", infect)
-            print(card.city, card.color, infect, False, card.city)
+            card: Card = infection_cards.remove_top()
             board.infect_city(card.city, card.color, infect, False, card.city)
             infection_discard.add_top(card)
 
-def run():
-    pass
+def epidemic() -> None:
+    # Increase epidemic level.
+    infection_counter += 1
+    # Pull infection card from bottom, and infect by 3.
+    card = infection_cards.remove_bottom()
+    board.infect_city(card.city, card.color, 3, False, card.city)
+    # Shuffle disard pile and add to top of infection deck.
+    infection_cards.add_stack(infection_discard.shuffle())
+    infection_discard.empty()    
 
 def turn():
     pass
 logging.getLogger().setLevel(logging.DEBUG)
-DIFFICULTY = 6
-player_count = 4
-player_list = get_players(player_count)
+
+player_list = get_players(PLAYER_COUNT)
+
 setup(player_list, DIFFICULTY)
 turn = 0
-# visualize_graph(board.map)
+
 while(True):
     player: RoleType = player_list[turn]
     print(f"{player.name()} turn.")
@@ -126,8 +106,24 @@ while(True):
 
     if player.actions == 0:
         # next player's turn
-        turn = (turn + 1) % player_count
         player.actions = 4 # reset actions
+        turn = (turn + 1) % PLAYER_COUNT
+
+        print("Player Card Draw 2")
+        # Draw 2 Player Cards
+        for _ in range(2):
+            card1 = player_cards.remove_top()
+            if card1.card_type == "EPIDEMIC":
+                print("EPIDEMIC PULLED")
+                epidemic()
+            else:
+                player.hand.add_top(card1)
+        # Draw {infection_rate} number of infections cards
+        for _ in range(INFECTION_RATE[infection_counter]):
+            card: Card = infection_cards.remove_top()
+            board.infect_city(card.city, card.color, 1, False, card.city)
+            infection_discard.add_top(card)
+        # End of player's turn
         continue
 
     print(f"You have {player.actions} actions left")
@@ -136,10 +132,10 @@ while(True):
     assert 0 <= action < 8, "Illegal input [0-7]"
 
     if action == 0:
-        # drive/ferry
-        neighbors = board.map.get(player.curr_city)
-        print(neighbors)
-        new_city = int(input(f"You are in {player.curr_city}. Where would you like to go?"))
+        # ask player where they want to drive/ferry
+        neighbors = board.map.get(player.curr_city).neighbors
+        print([x.name for x in neighbors])
+        new_city = int(input(f"You are in {player.curr_city.name}. Where would you like to go?"))
         assert new_city in range(len(neighbors)), "Illegal entry"
         player.move_to(neighbors[new_city])
     elif action == 1:
@@ -209,3 +205,4 @@ while(True):
         pass
     else:
         print("An error occured.")
+        player.actions -= 1
