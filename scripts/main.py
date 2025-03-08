@@ -1,6 +1,8 @@
 import logging
 import random
-import pygame
+
+# import pygame
+from scripts.Deck import Deck
 from Deck import Deck
 from Card import Card
 from Map import Map
@@ -11,7 +13,7 @@ infection_cards = Deck()
 infection_discard = Deck()
 player_cards = Deck()
 player_discard = Deck()
-research_stations: dict[str, 0] = {}
+research_stations: list[str] = []
 disease_state = {"blue": 0, "red": 0, "yellow": 0, "black": 0}
 outbreak_counter = 0
 infection_counter = 0
@@ -20,8 +22,8 @@ board = Map()
 game_over = 0
 
 
-import networkx as nx
-import matplotlib.pyplot as plt
+# import networkx as nx
+# import matplotlib.pyplot as plt
 
 def visualize_graph(adjacency_list):
     # Create a directed graph from the adjacency list
@@ -125,15 +127,16 @@ while(True):
     if player.actions == 0:
         # next player's turn
         turn = (turn + 1) % player_count
+        player.actions = 4 # reset actions
         continue
 
     print(f"You have {player.actions} actions left")
-    print("Drive/Ferry, Direct Flight, Charter Flight, Shuttle Flight, Build research, Treat Disease, Share Knowledge, Discover Cure")
+    print("[0] Drive/Ferry\n[1] Direct Flight\n[2] Charter Flight\n[3] Shuttle Flight\n[4] Build research\n[5] Treat Disease\n[6] Share Knowledge\n[7] Discover Cure")
     action = int(input("What action would you like to take?"))
-
     assert 0 <= action < 8, "Illegal input [0-7]"
+
     if action == 0:
-        # ask player where they want to drive/ferry
+        # drive/ferry
         neighbors = board.map.get(player.curr_city)
         print(neighbors)
         new_city = int(input(f"You are in {player.curr_city}. Where would you like to go?"))
@@ -146,5 +149,63 @@ while(True):
         card = player.hand.remove_card(idx)
         player_discard.add_top(card)
         player.move_to(card.city)
-    else:
+    elif action == 2:
+        # Charter Flight
+        card = None
+        city = player.curr_city
+        for i in player_cards.deck:
+            print(i.city, city)
+            if i.city == city:
+                card = i
+
+        if card is None:
+            print("You do not have the city card of the cit you are currently in.")
+            continue
+        else:
+            new_city = input("What city would you like to travel to?")
+            assert new_city in board.cities, f"{new_city}"
+            player.move_to(new_city)
+    elif action == 3:
+        # Shuttle Flight
+        if player.curr_city in research_stations:
+            if len(research_stations < 1):
+                print("No other research station to travel to.")
+            else:
+                count = 0
+                new_city = input("Which other research station would you like to travel to?")
+                for idx,i in enumerate(research_stations):
+                    if i != player.curr_city:
+                        print(f"[{count}]", i)
+                player.move_to(research_stations[new_city])
+        else:
+            print(f"{player.name} is unable to use Shuttle Flight right now")
+    elif action == 4:
+        # Build Research
+        if player.build_research():
+            research_stations.appen(player.curr_city)
+    elif action == 5:
+        # Treat Disease
+        print(board.disease_map.get(player.curr_city))
+        color = input("What disease color would you like to treat?")
+        remove_amt = player.treat_disease()
+        # check for cured state
+        if disease_state[color] > 0:
+            remove_amt = 3
+        if board.disease_map.get(player.curr_city)[color] > 0:
+            curr = board.disease_map.get(player.curr_city)[color]
+            if curr - remove_amt < 0:
+                curr = 0
+            else:
+                curr -= remove_amt
+            player.actions -= 1
+        else:
+            print("Not a valid city")
         pass
+    elif action == 6:
+        # Share Knowledge
+        pass
+    elif action == 7:
+        # Discover cure
+        pass
+    else:
+        print("An error occured.")

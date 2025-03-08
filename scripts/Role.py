@@ -16,8 +16,8 @@ class Role():
         self.actions = 4
         self.curr_city = "Atlanta"
 
-    def name(self):
-        pass
+    def name(self) -> str:
+        return "INVALID"
 
     def move_to(self, new_city):
         """
@@ -45,16 +45,27 @@ class Role():
         Move between cities with a research city
         """
         pass
-    def build_research(self):
+    def build_research(self) -> bool:
         """
         Build a research city in the current city and remove that city card from hand.
         """
-        pass
-    def treat_disease(self):
+        valid_card = None
+        for card in self.hand:
+            if card.city == self.curr_city:
+                valid_card = card
+        if valid_card is None:
+            print(f"No research city can be built in {self.curr_city}.")
+            return False
+        else:
+            self.actions -= 1
+            return True
+
+    def treat_disease(self) -> int:
         """
         Remove 1 color cube from the current city
         """
-        pass
+        return 1
+
     def share_knowledge(self):
         """
         Trade card(s) with another player if both players are within the same city as the card being traded.
@@ -93,6 +104,12 @@ class Medic(Role):
     
     def name(self):
         return "Medic"
+    
+    def treat_disease(self) -> int:
+        """
+        Remove 3 color cube from the current city
+        """
+        return 3
 
 class Scientist(Role):
     """
@@ -130,6 +147,13 @@ class Operations(Role):
     
     def name(self):
         return "Operations"
+    
+    def build_research(self) -> bool:
+        """
+        Build a research city in the current city and remove that city card from hand.
+        """
+        self.actions -= 1
+        return True
 
 class ContingencyPlanner(Role):
     """
